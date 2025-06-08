@@ -88,7 +88,7 @@ func checkFrontendStatus() string {
 }
 
 func getCommitHash() (string, error) {
-	url := "https://api.github.com/repos/mleager/tf-billing-alarms/commits/main"
+	url := "https://api.github.com/repos/mleager/health-check-backend/commits/main"
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Printf("Failed to get commit hash: %v", err)
