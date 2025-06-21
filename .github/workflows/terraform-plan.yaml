@@ -2,9 +2,9 @@ name: Terraform Plan
 
 on:
   pull_request:
-    paths:
-    - './terraform/**'
-    - '.github/workflows/terraform-plan.yml'
+    # paths:
+    # - './terraform/**'
+    # - '.github/workflows/terraform-plan.yml'
 
 env:
   CONFIG_DIRECTORY: ./terraform
