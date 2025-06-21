@@ -56,14 +56,17 @@ jobs:
       id: plan
       run: terraform plan -var-file=${{ env.VAR_FILE }} -no-color -out=tfplan
 
-    - name: Get Plan Output
-      id: plan-output
-      run: |
-        PLAN_OUTPUT=$(terraform show -no-color tfplan)
-        PLAN_OUTPUT="${PLAN_OUTPUT//'%'/'%25'}"
-        PLAN_OUTPUT="${PLAN_OUTPUT//$'\n'/'%0A'}"
-        PLAN_OUTPUT="${PLAN_OUTPUT//$'\r'/'%0D'}"
-        echo "plan=$PLAN_OUTPUT" >> $GITHUB_OUTPUT
+    - name: Save Plan Output to File
+      run: terraform show -no-color tfplan > plan.txt
+
+        # - name: Get Plan Output
+    #   id: plan-output
+    #   run: |
+    #     PLAN_OUTPUT=$(terraform show -no-color tfplan)
+    #     PLAN_OUTPUT="${PLAN_OUTPUT//'%'/'%25'}"
+    #     PLAN_OUTPUT="${PLAN_OUTPUT//$'\n'/'%0A'}"
+    #     PLAN_OUTPUT="${PLAN_OUTPUT//$'\r'/'%0D'}"
+    #     echo "plan=$PLAN_OUTPUT" >> $GITHUB_OUTPUT
 
     - name: Update PR
       uses: actions/github-script@v6
@@ -73,6 +76,9 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
+          const fs = require('fs');
+          const planOutput = fs.readFileSync('./terraform/plan.txt', 'utf8');
+
           // Get existing bot comments for the PR
           const { data: comments } = await github.rest.issues.listComments({
             owner: context.repo.owner,
@@ -90,12 +96,12 @@ jobs:
 
           <details><summary>Show Plan</summary>
 
-          \`\`\`${process.env.PLAN}\`\`\`
+          \`\`\`${planOutput}\`\`\`
           </details>`;
 
           if (botComment) {
             // Update existing comment
-            github.rest.issues.updateComment({
+            await github.rest.issues.updateComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               comment_id: botComment.id,
@@ -103,7 +109,7 @@ jobs:
             });
           } else {
             // Create new comment
-            github.rest.issues.createComment({
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
