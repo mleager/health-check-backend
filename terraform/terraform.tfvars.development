@@ -1,0 +1,45 @@
+env           = "development"
+region        = "us-east-1"
+instance_type = "t2.micro"
+bucket_name   = "frontend-assets-development-8864"
+
+name = {
+  ecr_repo        = "health-check"
+  ecs_cluster     = "ecs-cluster"
+  service         = "ecs-service"
+  family          = "service-family"
+  asg             = "asg"
+  alb             = "alb"
+  target_group    = "alb-target-group"
+  template_prefix = "ecs-template"
+  project         = "health-check"
+}
+
+vpc = {
+  cidr            = "10.0.0.0/16"
+  public_subnets  = ["10.0.1.0/24", "10.0.2.0/24"]
+  private_subnets = ["10.0.3.0/24", "10.0.4.0/24"]
+  azs             = ["us-east-1a", "us-east-1b"]
+}
+
+task = {
+  cpu          = 512
+  memory       = 512
+  network_mode = "awsvpc"
+}
+
+container = {
+  name          = "health-check-backend"
+  image_tag     = "latest"
+  containerPort = 4000
+  hostPort      = 4000
+  cpu           = 512
+  memory        = 512
+}
+
+size = {
+  min     = 1
+  max     = 2
+  desired = 1
+}
+
