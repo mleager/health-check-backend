@@ -18,6 +18,8 @@ jobs:
   terraform:
     name: 'Terraform Destroy'
     runs-on: ubuntu-latest
+    # permissions:
+    #   contents: write
     defaults:
       run:
         working-directory: ${{ env.CONFIG_DIRECTORY }}
@@ -56,35 +58,9 @@ jobs:
     - name: Process Destroy Output
       if: github.event.inputs.confirm_destroy == 'DESTROY'
       run: |
-        SUMMARY=$(grep -A5 "Destroy complete!" destroy_output.txt | tail -n +2 || echo "No matching summary found.")
-        echo "$SUMMARY" > destroy_summary.txt
-
-    - name: Create GitHub Commit Comment
-      if: github.event.inputs.confirm_destroy == 'DESTROY'
-      uses: actions/github-script@v6
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const fs = require('fs');
-          const summary = fs.readFileSync('./terraform/destroy_summary.txt', 'utf8');
-          const exitCode = Number(process.env.EXIT_CODE || '1');
-          const status = exitCode === 0 ? '✅ Success' : '❌ Failure';
-
-          github.rest.repos.createCommitComment({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            commit_sha: context.sha,
-            body: `### Terraform Destroy: ${status}
-
-            <details><summary>Show Destroy Summary</summary>
-
-            \`\`\`
-            ${summary}
-            \`\`\`
-            </details>`
-          })
-      env:
-        EXIT_CODE: ${{ steps.destroy.outputs.exit_code }}
+        echo "========== Terraform Destroy Summary =========="
+        grep -A5 "Destroy complete!" destroy_output.txt || echo "No matching summary found."
+        echo "==============================================="
 
     - name: Check Terraform Destroy Status
       if: github.event.inputs.confirm_destroy == 'DESTROY' && steps.destroy.outputs.exit_code != 0
@@ -96,3 +72,54 @@ jobs:
         echo "Destroy action was not confirmed. To destroy resources, you must type DESTROY in the confirmation input."
         exit 1
 
+    # - name: Terraform Destroy
+    #   if: github.event.inputs.confirm_destroy == 'DESTROY'
+    #   id: destroy
+    #   run: |
+    #     terraform destroy -var-file=${{ env.VAR_FILE }} -auto-approve | tee destroy_output.txt
+    #     exit_code=${PIPESTATUS[0]}
+    #     echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
+    #
+    # - name: Process Destroy Output
+    #   if: github.event.inputs.confirm_destroy == 'DESTROY'
+    #   run: |
+    #     SUMMARY=$(grep -A5 "Destroy complete!" destroy_output.txt | tail -n +2 || echo "No matching summary found.")
+    #     echo "$SUMMARY" > destroy_summary.txt
+    #
+    # - name: Create GitHub Commit Comment
+    #   if: github.event.inputs.confirm_destroy == 'DESTROY'
+    #   uses: actions/github-script@v6
+    #   with:
+    #     github-token: ${{ secrets.GITHUB_TOKEN }}
+    #     script: |
+    #       const fs = require('fs');
+    #       const summary = fs.readFileSync('./terraform/destroy_summary.txt', 'utf8');
+    #       const exitCode = Number(process.env.EXIT_CODE || '1');
+    #       const status = exitCode === 0 ? '✅ Success' : '❌ Failure';
+    #
+    #       github.rest.repos.createCommitComment({
+    #         owner: context.repo.owner,
+    #         repo: context.repo.repo,
+    #         commit_sha: context.sha,
+    #         body: `### Terraform Destroy: ${status}
+    #
+    #         <details><summary>Show Destroy Summary</summary>
+    #
+    #         \`\`\`
+    #         ${summary}
+    #         \`\`\`
+    #         </details>`
+    #       })
+    #   env:
+    #     EXIT_CODE: ${{ steps.destroy.outputs.exit_code }}
+    #
+    # - name: Check Terraform Destroy Status
+    #   if: github.event.inputs.confirm_destroy == 'DESTROY' && steps.destroy.outputs.exit_code != 0
+    #   run: exit 1
+    #
+    # - name: Destroy Not Confirmed
+    #   if: github.event.inputs.confirm_destroy != 'DESTROY'
+    #   run: |
+    #     echo "Destroy action was not confirmed. To destroy resources, you must type DESTROY in the confirmation input."
+    #     exit 1
+    #
