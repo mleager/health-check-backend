@@ -55,13 +55,9 @@ jobs:
 
     - name: Process Destroy Output
       if: github.event.inputs.confirm_destroy == 'DESTROY'
-      id: destroy-output
       run: |
         SUMMARY=$(grep -A5 "Destroy complete!" destroy_output.txt | tail -n +2 || echo "No matching summary found.")
-        SUMMARY="${SUMMARY//'%'/'%25'}"
-        SUMMARY="${SUMMARY//$'\n'/'%0A'}"
-        SUMMARY="${SUMMARY//$'\r'/'%0D'}"
-        echo "summary=$SUMMARY" >> $GITHUB_OUTPUT
+        echo "$SUMMARY" > destroy_summary.txt
 
     - name: Create GitHub Commit Comment
       if: github.event.inputs.confirm_destroy == 'DESTROY'
@@ -69,7 +65,8 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          const summary = process.env.SUMMARY;
+          const fs = require('fs');
+          const summary = fs.readFileSync('./terraform/destroy_summary.txt', 'utf8');
           const exitCode = Number(process.env.EXIT_CODE || '1');
           const status = exitCode === 0 ? '✅ Success' : '❌ Failure';
 
@@ -87,7 +84,6 @@ jobs:
             </details>`
           })
       env:
-        SUMMARY: ${{ steps.destroy-output.outputs.summary }}
         EXIT_CODE: ${{ steps.destroy.outputs.exit_code }}
 
     - name: Check Terraform Destroy Status
