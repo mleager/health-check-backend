@@ -1,7 +1,8 @@
-env           = "development"
-region        = "us-east-1"
-instance_type = "t2.micro"
-bucket_name   = "frontend-assets-development-8864"
+env               = "development"
+region            = "us-east-1"
+instance_type     = "t2.micro"
+bucket_name       = "frontend-assets-development-8864"
+route53_zone_name = "zerodawndevops.com"
 
 name = {
   ecr_repo        = "health-check"
