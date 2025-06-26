@@ -18,6 +18,12 @@ variable "bucket_name" {
   description = "S3 bucket name for ECS Task Role"
 }
 
+variable "route53_zone_name" {
+  type        = string
+  default     = "zerodawndevops.com"
+  description = "Name of Route53 zone for DNS record"
+}
+
 variable "name" {
   default = {
     ecr_repo        = "health-check"
