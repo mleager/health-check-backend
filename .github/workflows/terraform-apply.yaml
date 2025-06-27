@@ -30,7 +30,6 @@ jobs:
         var_file: ${{ env.VAR_FILE }}
         make_commit_comment: true
         github_token: ${{ secrets.GITHUB_TOKEN }}
-      secrets:
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
