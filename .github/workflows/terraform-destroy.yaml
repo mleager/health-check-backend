@@ -21,8 +21,6 @@ jobs:
     defaults:
       run:
         working-directory: ./terraform
-    permissions:
-      contents: write
     steps:
       - name: Terraform Destroy
         uses: mleager/tf-shared-actions/.github/actions/terraform-destroy@main
