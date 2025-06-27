@@ -11,11 +11,12 @@ env:
   STATE_BUCKET: tf-state-8864
   PROJECT_NAME: backend-health-check
   AWS_REGION: us-east-1
-  VAR_FILE: terraform.tfvars.development
+  ENVIRONMENT: development
 
 jobs:
   terraform:
     runs-on: ubuntu-latest
+    # environment: ${{ env.ENVIRONMENT }}
     permissions:
       contents: write
     defaults:
@@ -28,7 +29,7 @@ jobs:
           bucket: ${{ env.STATE_BUCKET }}
           key: ${{ env.PROJECT_NAME }}/terraform.tfstate
           region: ${{ env.AWS_REGION }}
-          var_file: ${{ env.VAR_FILE }}
+          var_file: terraform.tfvars.${{ env.ENVIRONMENT }}
           confirm_destroy: ${{ github.event.inputs.confirm_destroy }}
           make_commit_comment: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
