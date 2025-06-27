@@ -20,7 +20,7 @@ type AppHealth struct {
 	CommitHash     string    `json:"commit_hash"`
 }
 
-const frontendURL = "http://localhost:5173"
+const frontendURL = "https://zerodawndevops.com"
 
 var (
 	startTime  time.Time
