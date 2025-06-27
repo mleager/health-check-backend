@@ -8,118 +8,33 @@ on:
         required: true
 
 env:
-  CONFIG_DIRECTORY: ./terraform
-  TF_VERSION: 1.12.1
-  VAR_FILE: terraform.tfvars.development
+  STATE_BUCKET: tf-state-8864
+  PROJECT_NAME: backend-health-check
   AWS_REGION: us-east-1
-  S3_KEY: backend-health-check
+  VAR_FILE: terraform.tfvars.development
 
 jobs:
   terraform:
-    name: 'Terraform Destroy'
     runs-on: ubuntu-latest
-    # permissions:
-    #   contents: write
+    permissions:
+      content: write
     defaults:
       run:
-        working-directory: ${{ env.CONFIG_DIRECTORY }}
-
+        working-directory: ./terraform
+    permissions:
+      contents: write
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+      - name: Terraform Destroy
+        uses: mleager/tf-shared-actions/.github/actions/terraform-destroy@main
+        with:
+          bucket: ${{ env.STATE_BUCKET }}
+          key: ${{ env.PROJECT_NAME }}/terraform.tfstate
+          region: ${{ env.AWS_REGION }}
+          var_file: ${{ env.VAR_FILE }}
+          confirm_destroy: ${{ github.event.inputs.confirm_destroy }}
+          make_commit_comment: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+        secrets:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v1
-      with:
-        terraform_version: ${{ env.TF_VERSION }}
-
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
-
-    - name: Terraform Init with S3 Backend
-      uses: mleager/tf-shared-actions/.github/actions/terraform-init@main
-      with:
-        bucket: ${{ secrets.STATE_BUCKET }}
-        key: ${{ env.S3_KEY }}/terraform.tfstate
-        region: ${{ env.AWS_REGION }}
-
-    - name: Terraform Destroy
-      if: github.event.inputs.confirm_destroy == 'DESTROY'
-      id: destroy
-      run: |
-        terraform destroy -var-file=${{ env.VAR_FILE }} -auto-approve | tee destroy_output.txt
-        exit_code=${PIPESTATUS[0]}
-        echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
-
-    - name: Process Destroy Output
-      if: github.event.inputs.confirm_destroy == 'DESTROY'
-      run: |
-        echo "========== Terraform Destroy Summary =========="
-        grep -A5 "Destroy complete!" destroy_output.txt || echo "No matching summary found."
-        echo "==============================================="
-
-    - name: Check Terraform Destroy Status
-      if: github.event.inputs.confirm_destroy == 'DESTROY' && steps.destroy.outputs.exit_code != 0
-      run: exit 1
-
-    - name: Destroy Not Confirmed
-      if: github.event.inputs.confirm_destroy != 'DESTROY'
-      run: |
-        echo "Destroy action was not confirmed. To destroy resources, you must type DESTROY in the confirmation input."
-        exit 1
-
-    # - name: Terraform Destroy
-    #   if: github.event.inputs.confirm_destroy == 'DESTROY'
-    #   id: destroy
-    #   run: |
-    #     terraform destroy -var-file=${{ env.VAR_FILE }} -auto-approve | tee destroy_output.txt
-    #     exit_code=${PIPESTATUS[0]}
-    #     echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
-    #
-    # - name: Process Destroy Output
-    #   if: github.event.inputs.confirm_destroy == 'DESTROY'
-    #   run: |
-    #     SUMMARY=$(grep -A5 "Destroy complete!" destroy_output.txt | tail -n +2 || echo "No matching summary found.")
-    #     echo "$SUMMARY" > destroy_summary.txt
-    #
-    # - name: Create GitHub Commit Comment
-    #   if: github.event.inputs.confirm_destroy == 'DESTROY'
-    #   uses: actions/github-script@v6
-    #   with:
-    #     github-token: ${{ secrets.GITHUB_TOKEN }}
-    #     script: |
-    #       const fs = require('fs');
-    #       const summary = fs.readFileSync('./terraform/destroy_summary.txt', 'utf8');
-    #       const exitCode = Number(process.env.EXIT_CODE || '1');
-    #       const status = exitCode === 0 ? '✅ Success' : '❌ Failure';
-    #
-    #       github.rest.repos.createCommitComment({
-    #         owner: context.repo.owner,
-    #         repo: context.repo.repo,
-    #         commit_sha: context.sha,
-    #         body: `### Terraform Destroy: ${status}
-    #
-    #         <details><summary>Show Destroy Summary</summary>
-    #
-    #         \`\`\`
-    #         ${summary}
-    #         \`\`\`
-    #         </details>`
-    #       })
-    #   env:
-    #     EXIT_CODE: ${{ steps.destroy.outputs.exit_code }}
-    #
-    # - name: Check Terraform Destroy Status
-    #   if: github.event.inputs.confirm_destroy == 'DESTROY' && steps.destroy.outputs.exit_code != 0
-    #   run: exit 1
-    #
-    # - name: Destroy Not Confirmed
-    #   if: github.event.inputs.confirm_destroy != 'DESTROY'
-    #   run: |
-    #     echo "Destroy action was not confirmed. To destroy resources, you must type DESTROY in the confirmation input."
-    #     exit 1
-    #
