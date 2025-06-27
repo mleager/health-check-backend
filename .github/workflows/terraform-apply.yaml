@@ -4,104 +4,33 @@ on:
   push:
     branches:
       - main
-    # paths:
-    #   - './terraform/**'
-    #   - '.github/workflows/terraform-apply.yaml'
 
 env:
-  CONFIG_DIRECTORY: ./terraform
-  TF_VERSION: 1.12.1
-  VAR_FILE: terraform.tfvars.development
+  STATE_BUCKET: tf-state-8864
+  PROJECT_NAME: backend-health-check
   AWS_REGION: us-east-1
-  S3_KEY: backend-health-check
+  ENVIRONMENT: development
 
 jobs:
   terraform:
-    name: 'Terraform Apply'
     runs-on: ubuntu-latest
+    # environment: ${{ env.ENVIRONMENT }}
     permissions:
       contents: write
     defaults:
       run:
-        working-directory: ${{ env.CONFIG_DIRECTORY }}
-
+        working-directory: ./terraform
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v2
-
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v1
-      with:
-        terraform_version: ${{ env.TF_VERSION }}
-
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
-
-    - name: Terraform Format
-      run: terraform fmt -check
-
-    - name: Terraform Init with S3 Backend
-      uses: mleager/tf-shared-actions/.github/actions/terraform-init@main
-      with:
-        bucket: ${{ secrets.STATE_BUCKET }}
-        key: ${{ env.S3_KEY }}/terraform.tfstate
-        region: ${{ env.AWS_REGION }}
-
-    - name: Terraform Validate
-      run: terraform validate
-
-    - name: Terraform Plan
-      id: plan
-      run: terraform plan -var-file=${{ env.VAR_FILE }} -no-color -out=tfplan
-
     - name: Terraform Apply
-      id: apply
-      run: |
-        terraform apply -auto-approve tfplan | tee apply_output.txt
-        exit_code=${PIPESTATUS[0]}
-        echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
-
-    - name: Check Terraform Apply Status
-      if: steps.apply.outputs.exit_code != 0
-      run: exit 1
-
-    - name: Process Apply Output
-      id: apply-output
-      run: |
-        # Extract only the summary from the apply output
-        SUMMARY=$(grep -A5 "Apply complete!" apply_output.txt | tail -n +2)
-        SUMMARY="${SUMMARY//'%'/'%25'}"
-        SUMMARY="${SUMMARY//$'\n'/'%0A'}"
-        SUMMARY="${SUMMARY//$'\r'/'%0D'}"
-        echo "summary=$SUMMARY" >> $GITHUB_OUTPUT
-
-    - name: Create GitHub Commit Comment
-      uses: actions/github-script@v6
+      id: terraform-apply
+      uses: mleager/tf-shared-actions/.github/actions/terraform-apply@main
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const summary = process.env.SUMMARY;
-          const exitCode = process.env.EXIT_CODE;
-          const status = exitCode === '0' ? '✅ Success' : '❌ Failure';
-
-          github.rest.repos.createCommitComment({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            commit_sha: context.sha,
-            body: `### Terraform Apply: ${status}
-
-            <details><summary>Show Apply Summary</summary>
-
-            \`\`\`
-            ${summary}
-            \`\`\`
-            </details>`
-          })
-      env:
-        SUMMARY: ${{ steps.apply-output.outputs.summary }}
-        EXIT_CODE: ${{ steps.apply.outputs.exit_code }}
+        bucket: ${{ env.STATE_BUCKET }}
+        key: ${{ env.PROJECT_NAME }}/terraform.tfstate
+        region: ${{ env.AWS_REGION }}
+        var_file: terraform.tfvars.${{ env.ENVIRONMENT }}
+        make_commit_comment: true
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
