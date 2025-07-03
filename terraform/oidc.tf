@@ -30,7 +30,7 @@ data "aws_iam_policy_document" "assume_github_oidc_apply" {
 }
 
 resource "aws_iam_role" "github_oidc_role_apply" {
-  name               = "github-oidc-role-${var.name.project}-apply"
+  name               = "oidc-${var.env}-${var.name.project}-apply"
   assume_role_policy = data.aws_iam_policy_document.assume_github_oidc_apply.json
   description        = "Allows Github Actions from ${var.name.project} to deploy frontend assets to S3 + CloudFront"
 }
@@ -60,7 +60,7 @@ data "aws_iam_policy_document" "assume_github_oidc_plan" {
 }
 
 resource "aws_iam_role" "github_oidc_role_plan" {
-  name               = "github-oidc-role-${var.name.project}-plan"
+  name               = "oidc-${var.env}-${var.name.project}-plan"
   assume_role_policy = data.aws_iam_policy_document.assume_github_oidc_plan.json
   description        = "Allows Github Actions from ${var.name.project} to deploy frontend assets to S3 + CloudFront"
 }
