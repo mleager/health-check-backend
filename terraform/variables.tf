@@ -34,7 +34,7 @@ variable "name" {
     asg             = "asg"
     target_group    = "alb-target-group"
     template_prefix = "ecs-template"
-    project         = "health-check"
+    project         = "health-check-backend"
   }
   description = <<-EOF
     Names for resources.

@@ -1,9 +1,10 @@
 name: Terraform Apply
 
 on:
-  push:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
+  workflow_dispatch:
 
 env:
   STATE_BUCKET: tf-state-8864

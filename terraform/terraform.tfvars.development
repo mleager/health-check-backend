@@ -13,7 +13,7 @@ name = {
   alb             = "alb"
   target_group    = "alb-target-group"
   template_prefix = "ecs-template"
-  project         = "health-check"
+  project         = "health-check-backend"
 }
 
 vpc = {
