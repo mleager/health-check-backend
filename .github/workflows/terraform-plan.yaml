@@ -4,8 +4,8 @@ on:
   pull_request:
 
 env:
+  CONFIG_DIRECTORY: ./terraform
   STATE_BUCKET: tf-state-8864
-  PROJECT_NAME: backend-health-check
   AWS_REGION: us-east-1
   ENVIRONMENT: development
 
@@ -13,23 +13,27 @@ jobs:
   terraform:
     runs-on: ubuntu-latest
     # environment: ${{ env.ENVIRONMENT }}
+    env:
+      PROJECT_NAME: ${{ github.event.repository.name }}
     permissions:
       contents: read
+      id-token: write
       pull-requests: write
     defaults:
       run:
-        working-directory: ./terraform
+        working-directory: ${{ env.CONFIG_DIRECTORY }}
     steps:
     - name: Terraform Plan
       id: terraform-plan
       uses: mleager/tf-shared-actions/.github/actions/terraform-plan@main
       with:
+        project_name: ${{ env.PROJECT_NAME }}
+        environment: ${{ env.ENVIRONMENT }}
         bucket: ${{ env.STATE_BUCKET }}
         key: ${{ env.PROJECT_NAME }}/terraform.tfstate
         region: ${{ env.AWS_REGION }}
         var_file: terraform.tfvars.${{ env.ENVIRONMENT }}
         make_pr_comment: true
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
 
