@@ -70,7 +70,7 @@ variable "task" {
 variable "container" {
   default = {
     name          = "health-check-backend"
-    image_tag     = "2.0"
+    image_tag     = "latest"
     containerPort = 4000
     hostPort      = 4000
     cpu           = 512
