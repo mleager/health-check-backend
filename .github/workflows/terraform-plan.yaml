@@ -27,6 +27,9 @@ jobs:
       id: terraform-plan
       uses: mleager/tf-shared-actions/.github/actions/terraform-plan@main
       with:
+        create_oidc_role: false
+        oidc_role: github-oidc-admin
+        aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
         project_name: ${{ env.PROJECT_NAME }}
         environment: ${{ env.ENVIRONMENT }}
         bucket: ${{ env.STATE_BUCKET }}
@@ -35,5 +38,4 @@ jobs:
         var_file: terraform.tfvars.${{ env.ENVIRONMENT }}
         make_pr_comment: true
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
 

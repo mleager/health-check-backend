@@ -29,6 +29,9 @@ jobs:
     - name: Terraform Destroy
       uses: mleager/tf-shared-actions/.github/actions/terraform-destroy@main
       with:
+        create_oidc_role: false
+        oidc_role: github-oidc-admin
+        aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
         project_name: ${{ env.PROJECT_NAME }}
         environment: ${{ env.ENVIRONMENT }}
         bucket: ${{ env.STATE_BUCKET }}
@@ -38,5 +41,4 @@ jobs:
         confirm_destroy: ${{ github.event.inputs.confirm_destroy }}
         make_commit_comment: true
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        aws_account_id: ${{ secrets.AWS_ACCOUNT_ID }}
 
