@@ -3,18 +3,16 @@ name: Terraform Plan
 on:
   pull_request:
 
-env:
-  CONFIG_DIRECTORY: ./terraform
-  STATE_BUCKET: tf-state-8864
-  AWS_REGION: us-east-1
-  ENVIRONMENT: development
-
 jobs:
   terraform:
     runs-on: ubuntu-latest
-    # environment: ${{ env.ENVIRONMENT }}
     env:
+      CONFIG_DIRECTORY: ./terraform
+      STATE_BUCKET: tf-state-8864
+      AWS_REGION: us-east-1
+      ENVIRONMENT: development
       PROJECT_NAME: ${{ github.event.repository.name }}
+    # environment: ${{ env.ENVIRONMENT }}
     permissions:
       contents: read
       id-token: write
