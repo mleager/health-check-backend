@@ -43,14 +43,10 @@ func main() {
 		commitHash = "unknown"
 	}
 
-	// Not Necessary for this scenario, but included for demonstration purposes
 	// go checkFrontendPeriodically()
 
 	app := fiber.New()
 
-	// Set CORS before calling the Route
-	// I've used CORS plenty, but never spent 20min banging my head just for it
-	// to be 1 line below the Handler...
 	app.Use(cors.New())
 
 	app.Get("/health", checkHealth)
@@ -135,7 +131,6 @@ func formatUptime(d time.Duration) string {
 	return fmt.Sprintf("%dsec", s)
 }
 
-// Not Necessary for this scenario, but included for demonstration purposes
 // func checkFrontendPeriodically() {
 // 	ticker := time.NewTicker(30 * time.Second)
 // 	defer ticker.Stop()
